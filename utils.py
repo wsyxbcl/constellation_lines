@@ -33,18 +33,25 @@ def tt11(theta):
 
 
 def x_y(ra1, dec1, ra2, dec2, lens_func=tt11, pixel_size=0.006):
-    ang_sep = angular_separation(
-        ra1, dec1, ra2, dec2)
-    pa = position_angle(
-        ra1, dec1, ra2, dec2)
-    r = lens_func(ang_sep)/pixel_size
+    ang_sep = angular_separation(ra1, dec1, ra2, dec2)
+    pa = position_angle(ra1, dec1, ra2, dec2)
+    r = lens_func(ang_sep) / pixel_size
     x = r * np.cos(pa)
     y = r * np.sin(pa)
     return x, y, ang_sep
 
 
-class FishEyeImage():
-    def __init__(self, img_path, raw_path, raw_iso_corr = False, f=14.6, k=-0.19, pixel_size=None, sensor = 'full_frame'):
+class FishEyeImage:
+    def __init__(
+        self,
+        img_path,
+        raw_path,
+        raw_iso_corr=False,
+        f=14.6,
+        k=-0.19,
+        pixel_size=None,
+        sensor="full_frame",
+    ):
         self.k = k
         self.f = f
         with rawpy.imread(raw_path) as rawfile:
@@ -55,16 +62,15 @@ class FishEyeImage():
 
         self.raw = np.array(raw)[:, :, 1]
         if raw_iso_corr:
-            self.raw[self.raw < 60000] = self.raw[self.raw <
-                                                60000]//(self.iso/1600)
+            self.raw[self.raw < 60000] = self.raw[self.raw < 60000] // (self.iso / 1600)
         # self.raw = np.array(raw)
-        if pixel_size is not None: 
+        if pixel_size is not None:
             self.pixel_size = pixel_size
         else:
-            if sensor == 'full_frame':
-                self.pixel_size = 24/self.raw.shape[0]
-            elif sensor == 'apsc':
-                self.pixel_size = 24/self.raw.shape[0]/1.55
+            if sensor == "full_frame":
+                self.pixel_size = 24 / self.raw.shape[0]
+            elif sensor == "apsc":
+                self.pixel_size = 24 / self.raw.shape[0] / 1.55
 
     def lens_func(self, theta):  # see https://ptgui.com/support.html#3_28
         if self.k >= -1 and self.k < 0:
@@ -111,10 +117,22 @@ class FishEyeImage():
             star_1 = cons_lines[i][0]
             star_2 = cons_lines[i][1]
             x1, y1, angular_separation1 = x_y(
-                self.ra, self.dec, star_1[0]/180*np.pi, star_1[1]/180*np.pi, self.lens_func, self.pixel_size)
+                self.ra,
+                self.dec,
+                star_1[0] / 180 * np.pi,
+                star_1[1] / 180 * np.pi,
+                self.lens_func,
+                self.pixel_size,
+            )
             x2, y2, angular_separation2 = x_y(
-                self.ra, self.dec, star_2[0]/180*np.pi, star_2[1]/180*np.pi, self.lens_func, self.pixel_size)
-            if angular_separation1<0.45*np.pi or angular_separation2<0.45*np.pi:
+                self.ra,
+                self.dec,
+                star_2[0] / 180 * np.pi,
+                star_2[1] / 180 * np.pi,
+                self.lens_func,
+                self.pixel_size,
+            )
+            if angular_separation1 < 0.45 * np.pi or angular_separation2 < 0.45 * np.pi:
                 if x2 < x1:
                     x1, x2 = x2, x1
                     y1, y2 = y2, y1
