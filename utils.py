@@ -11,11 +11,12 @@ from astropy.stats import sigma_clipped_stats
 import tetra3
 import rawpy
 import exiftool
+from pathlib import Path
 
 
 
 t3 = tetra3.Tetra3()
-
+cons_file_path = Path(__file__).parent / "data/conslines.npy"
 
 def rot(vectors, deg):
     R_M = [[np.cos(deg), -np.sin(deg)],
@@ -95,7 +96,7 @@ class FishEyeImage():
     # def lens_proj_reverse(self, xy, image_to_show):
     #     xy
 
-    def constellation(self, fn='test.jpg', cons_file_path='conslines.npy'):
+    def constellation(self, fn='test.jpg', cons_file_path=cons_file_path):
         cons_lines = np.load(cons_file_path)
         cons_lines_xy = np.array([[0,0],[0,0]])
         draw = ImageDraw.Draw(self.img)
