@@ -132,7 +132,7 @@ class FishEyeImage:
                 self.lens_func,
                 self.pixel_size,
             )
-            if angular_separation1 < 0.45 * np.pi or angular_separation2 < 0.45 * np.pi:
+            if angular_separation1 < 0.4 * np.pi or angular_separation2 < 0.4 * np.pi:
                 if x2 < x1:
                     x1, x2 = x2, x1
                     y1, y2 = y2, y1
