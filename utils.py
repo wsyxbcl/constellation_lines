@@ -1,3 +1,4 @@
+import math
 import numpy as np
 
 # import matplotlib.pyplot as plt
@@ -48,7 +49,7 @@ class FishEyeImage:
         raw_path,
         raw_iso_corr=False,
         f=14.6,
-        k=-0.19,
+        k=1,
         pixel_size=None,
         sensor="full_frame",
     ):
@@ -91,12 +92,34 @@ class FishEyeImage:
         data4t3 = data.astype(np.uint16)
         data4t3[data4t3 <= 0] = 0
         img4t3 = Image.fromarray(data4t3)
-        self.solution = t3.solve_from_image(img4t3, distortion=[-0.5, 0])
+        self.solution = t3.solve_from_image(img4t3, distortion=[-0.5, 0], return_matches=True)
         print(self.solution)
         self.ra = self.solution["RA"] / 180 * np.pi
         self.dec = self.solution["Dec"] / 180 * np.pi
         self.roll = self.solution["Roll"] / 180 * np.pi
         return self.solution
+
+    def calculate_focal_length(self):
+        matched_centroids = self.solution.get('matched_centroids')
+        matched_catID = self.solution.get('matched_catID')
+        #TODO optimize by all stars
+        star1_centroid = matched_centroids[0]
+        star2_centroid = matched_centroids[1]
+        star1_id = matched_catID[0]
+        star2_id = matched_catID[1]
+        pixel_distance = math.sqrt((star1_centroid[1] - star2_centroid[1])**2 + (star1_centroid[0] - star2_centroid[0])**2)
+        star1_idx = np.where(t3.star_catalog_IDs == star1_id)[0][0]
+        star2_idx = np.where(t3.star_catalog_IDs == star2_id)[0][0]
+        star1_ra, star1_dec = t3.star_table[star1_idx][0], t3.star_table[star1_idx][1]
+        star2_ra, star2_dec = t3.star_table[star2_idx][0], t3.star_table[star2_idx][1]
+
+        delta_ra = star2_ra - star1_ra
+        delta_dec = star2_dec - star1_dec
+        a = math.sin(delta_dec / 2) ** 2 + math.cos(star1_dec) * math.cos(star2_dec) * math.sin(delta_ra / 2) ** 2
+        angular_distance_rad = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        focal_length = (pixel_distance * self.pixel_size) / angular_distance_rad
+        print(f"Calculated focal length: {focal_length} mm")
+        self.f = focal_length
 
     def rot_shift(self, xy, image_to_show):
         xy = rot(rot(xy, np.pi / 2), self.roll)
